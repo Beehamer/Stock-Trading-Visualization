@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib import style
 import pandas as pd
+from dateutil import parser
 
 # finance module is no longer part of matplotlib
 # see: https://github.com/matplotlib/mpl_finance
@@ -34,13 +35,19 @@ class StockTradingGraph:
         self.net_worths = np.zeros(len(df['Date']))
         self.profit_values = np.zeros(len(df['Date']))
 
+
+
         # Create a figure on screen and set the title
         fig = plt.figure()
         fig.suptitle(title)
 
         # Loading the s&p 500 data
         self.sp_df = pd.read_csv('/Users/yilun/Desktop/File/work/bver/gym-env/Stock-Trading-Visualization/data/^GSPC.csv')
-        self.sp_df = self.sp_df[:len(df['Date'])]
+
+        lags = (parser.parse(df['Date'].iloc[0]) - parser.parse(self.sp_df['Date'].iloc[0])).days
+
+        print (20*"*" , lags)
+        self.sp_df = self.sp_df[lags:lags + len(df['Date'])]
         # converting them to the actual profit
         self.sp_array = self.sp_df['Close'].to_numpy()
         self.initial_stock_num  = 10000.0 / self.sp_array[0]
