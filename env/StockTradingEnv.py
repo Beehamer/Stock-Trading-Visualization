@@ -15,9 +15,6 @@ MAX_STEPS = 20000
 
 INITIAL_ACCOUNT_BALANCE = 10000
 
-LOOKBACK_WINDOW_SIZE = 40
-
-
 def factor_pairs(val):
     return [(i, val / i) for i in range(1, int(val**0.5)+1) if val % i == 0]
 
@@ -27,22 +24,30 @@ class StockTradingEnv(gym.Env):
     metadata = {'render.modes': ['live', 'file', 'none']}
     visualization = None
 
-    def __init__(self, df):
-        super(StockTradingEnv, self).__init__()
+    lookback_days = 40
 
+    def __init__(self, df, lookback_days):
+        super(StockTradingEnv, self).__init__()
+        print ("*** *** here at __init__ *** *** lookback_days is " + str(lookback_days))
         self.df = self._adjust_prices(df)
         self.reward_range = (0, MAX_ACCOUNT_BALANCE)
+        self.lookback_days = lookback_days
 
         # Actions of the format Buy x%, Sell x%, Hold, etc.
         self.action_space = spaces.Box(
             low=np.array([0, 0]), high=np.array([3, 1]), dtype=np.float16)
 
         # Prices contains the OHCL values for the last five prices
+        #LOOKBACK_WINDOW_SIZE = lookback_days
         self.observation_space = spaces.Box(
-            low=0, high=1, shape=(5, LOOKBACK_WINDOW_SIZE + 2), dtype=np.float16)
+            low=0, high=1, shape=(5, self.lookback_days + 2), dtype=np.float16)
+
 
     def _adjust_prices(self, df):
-        adjust_ratio = df['Adjusted_Close'] / df['Close']
+        if 'Adjusted_Close' in df.columns:
+           adjust_ratio = df['Adjusted_Close'] / df['Close']
+        else:
+            adjust_ratio = 1
 
         df['Open'] = df['Open'] * adjust_ratio
         df['High'] = df['High'] * adjust_ratio
@@ -52,21 +57,16 @@ class StockTradingEnv(gym.Env):
         return df
 
     def _next_observation(self):
-        frame = np.zeros((5, LOOKBACK_WINDOW_SIZE + 1))
+        frame = np.zeros((5, self.lookback_days + 1))
 
         # Get the stock data points for the last 5 days and scale to between 0-1
         np.put(frame, [0, 4], [
-            self.df.loc[self.current_step: self.current_step +
-                        LOOKBACK_WINDOW_SIZE, 'Open'].values / MAX_SHARE_PRICE,
-            self.df.loc[self.current_step: self.current_step +
-                        LOOKBACK_WINDOW_SIZE, 'High'].values / MAX_SHARE_PRICE,
-            self.df.loc[self.current_step: self.current_step +
-                        LOOKBACK_WINDOW_SIZE, 'Low'].values / MAX_SHARE_PRICE,
-            self.df.loc[self.current_step: self.current_step +
-                        LOOKBACK_WINDOW_SIZE, 'Close'].values / MAX_SHARE_PRICE,
-            self.df.loc[self.current_step: self.current_step +
-                        LOOKBACK_WINDOW_SIZE, 'Volume'].values / MAX_NUM_SHARES,
-        ])
+            self.df.loc[self.current_step - self.lookback_days: self.current_step, 'Open'].values / MAX_SHARE_PRICE,
+            self.df.loc[self.current_step - self.lookback_days: self.current_step, 'High'].values / MAX_SHARE_PRICE,
+            self.df.loc[self.current_step - self.lookback_days: self.current_step, 'Low'].values / MAX_SHARE_PRICE,
+            self.df.loc[self.current_step - self.lookback_days: self.current_step, 'Close'].values / MAX_SHARE_PRICE,
+            self.df.loc[self.current_step - self.lookback_days: self.current_step, 'Volume'].values / MAX_NUM_SHARES,
+            ])
 
         # Append additional data and scale each value to between 0-1
         obs = np.append(frame, [
@@ -181,9 +181,9 @@ class StockTradingEnv(gym.Env):
                 self.visualization = StockTradingGraph(
                     self.df, kwargs.get('title', None))
 
-            if self.current_step > LOOKBACK_WINDOW_SIZE:
+            if self.current_step > self.lookback_days:
                 self.visualization.render(
-                    self.current_step, self.net_worth, self.trades, window_size=LOOKBACK_WINDOW_SIZE)
+                    self.current_step, self.net_worth, self.trades, window_size=self.lookback_days)
 
     def close(self):
         if self.visualization != None:
