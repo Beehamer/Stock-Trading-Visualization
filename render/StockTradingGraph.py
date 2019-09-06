@@ -1,5 +1,4 @@
 
-
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -43,22 +42,26 @@ class StockTradingGraph:
         fig.suptitle(title)
 
         # Loading the s&p 500 data
-        self.sp_df = pd.read_csv('/Users/yilun/Desktop/File/work/bver/gym-env/Stock-Trading-Visualization/data/^GSPC.csv')
-        lags = (parser.parse(df['Date'].iloc[0]) - parser.parse(self.sp_df['Date'].iloc[0])).days
+        self.sp_df = pd.read_csv('./data/^GSPC.csv')
+      
+        # lags = (parser.parse(df['Date'].iloc[0]) - parser.parse(self.sp_df['Date'].iloc[0])).days
+        #mask = (self.sp_df['Date'] == str(df['Date'].iloc[0]))
+        #lags = int(self.sp_df.loc[mask])
 
+        lags = self.sp_df.index[self.sp_df['Date'] == df['Date'].iloc[0]].tolist()[0]
 
+        print("Length of  self.sp_df " + str(len(self.sp_df)) + "and lags is" + str(lags))
 
         self.sp_df = self.sp_df[lags:lags + len(df['Date'])]
         # converting them to the actual profit
         self.sp_array = self.sp_df['Close'].to_numpy()
-        self.initial_sp_stock_num  = 10000.0 / self.sp_array[self.training_set_size]
+        print("Length of  self.sp_array " + str(len(self.sp_array)) + " and the lags is:" + str(lags))
+        self.initial_sp_stock_num = 10000.0 / self.sp_array[self.training_set_size]
         self.sp_worth = np.full(len(self.sp_array), 10000)
 
 
         for i in range(self.training_set_size, len(self.sp_array)):
             self.sp_worth[i] = self.initial_sp_stock_num * self.sp_array[i]
-            print("*** S&P worth", i, self.sp_worth[i], self.initial_sp_stock_num, self.sp_array[i])
-
 
         self.buy_and_hold = np.zeros(len(df['Date']))
         self.buy_and_hold[0] = 10000
