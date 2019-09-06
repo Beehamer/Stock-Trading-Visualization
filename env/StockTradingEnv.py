@@ -127,12 +127,16 @@ class StockTradingEnv(gym.Env):
     def step(self, action):
         # Execute one time step within the environment
         self._take_action(action)
-
+        
         self.current_step += 1
 
         delay_modifier = (self.current_step / MAX_STEPS)
 
-        reward = self.balance * delay_modifier + self.current_step
+        #reward = self.balance * delay_modifier + self.current_step
+
+        reward = self.net_worth 
+
+        print("*** REWARD [" + str(self.current_step) + "] ***: "+ str(reward))
         done = self.net_worth <= 0 or self.current_step >= len(
             self.df.loc[:, 'Open'].values)
 

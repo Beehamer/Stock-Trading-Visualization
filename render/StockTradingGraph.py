@@ -124,7 +124,9 @@ class StockTradingGraph:
 
         # Add space above and below min/max net worth
         self.net_worth_ax.set_ylim(
-            min(self.net_worths[np.nonzero(self.net_worths)]) / 1.25, max(self.net_worths) * 1.25)
+            min(self.net_worths[np.nonzero(self.net_worths)].min(), 
+                self.sp_worth[np.nonzero(self.sp_worth)].min(), self.buy_and_hold[np.nonzero(self.buy_and_hold)].min()) / 1.25, 
+            max(self.net_worths[step_range].max(), self.sp_worth[step_range].max(), self.buy_and_hold[step_range].max()) * 1.25)
 
 
     def _render_profit(self, current_step, net_worth, step_range, dates, starting_net_worth):
