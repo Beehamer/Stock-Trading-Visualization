@@ -3,7 +3,6 @@ import sys
 from pathlib import Path
 
 from argparse import ArgumentParser
-
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines import PPO2
@@ -29,6 +28,9 @@ def cmd_parse():
     parser.add_argument("--look_back_days", type=int,
                         help="Number (int) of look back days before making trading decision. Default is 5 days",
                         dest="look_back_days", default="40")
+    parser.add_argument("--output_file",
+                        help="Name of output file for the rewards and the total net_worth. Default is output.csv",
+                        dest="output_file", default="output.csv")
     return parser
 
 
@@ -59,7 +61,7 @@ def main():
     print("The model to train the agent here is: ", options.model)
 
     # The algorithms require a vectorized environment to run
-    env = DummyVecEnv([lambda: StockTradingEnv(df, options.look_back_days, options.training_set_size)])
+    env = DummyVecEnv([lambda: StockTradingEnv(df, options.look_back_days, options.training_set_size, options.output_file)])
 
     if options.model == "PPO2":
         model = PPO2(MlpPolicy, env, verbose=1)
@@ -70,6 +72,7 @@ def main():
         action, _states = model.predict(obs)
         obs, rewards, done, info = env.step(action)
         env.render(title= options.ticker)
+    env.close()
 
 if __name__ == "__main__":
     main()

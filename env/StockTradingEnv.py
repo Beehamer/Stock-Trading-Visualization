@@ -26,7 +26,7 @@ class StockTradingEnv(gym.Env):
 
     lookback_days = 40
 
-    def __init__(self, df, lookback_days, training_set_size):
+    def __init__(self, df, lookback_days, training_set_size, output_file):
         super(StockTradingEnv, self).__init__()
         print ("*** *** here at __init__ *** *** lookback_days is " + str(lookback_days))
         self.df = self._adjust_prices(df)
@@ -36,12 +36,13 @@ class StockTradingEnv(gym.Env):
         # Actions of the format Buy x%, Sell x%, Hold, etc.
         self.action_space = spaces.Box(
             low=np.array([0, 0]), high=np.array([3, 1]), dtype=np.float16)
+        self.output = []
+        self.output_file = output_file
 
         # Prices contains the OHCL values for the last five prices
         #LOOKBACK_WINDOW_SIZE = lookback_days
         self.observation_space = spaces.Box(
             low=0, high=1, shape=(5, self.lookback_days + 2), dtype=np.float16)
-
 
     def _adjust_prices(self, df):
         if 'Adjusted_Close' in df.columns:
@@ -53,7 +54,6 @@ class StockTradingEnv(gym.Env):
         df['High'] = df['High'] * adjust_ratio
         df['Low'] = df['Low'] * adjust_ratio
         df['Close'] = df['Close'] * adjust_ratio
-
         return df
 
     def _next_observation(self):
@@ -141,7 +141,8 @@ class StockTradingEnv(gym.Env):
             self.df.loc[:, 'Open'].values)
 
         obs = self._next_observation()
-
+        
+        self.output.append((self.current_step, self.net_worth, reward)) 
         return obs, reward, done, {}
 
     # def reset(self):
@@ -205,6 +206,12 @@ class StockTradingEnv(gym.Env):
                     self.current_step, self.net_worth, self.trades, window_size=self.lookback_days)
 
     def close(self):
+        print("close(function) called")
         if self.visualization != None:
             self.visualization.close()
             self.visualization = None
+        with open(self.output_file, 'a+') as f:
+            f.write("(current step, net_worth, reward")
+            for items in self.output:
+                f.write("%s\n" % str(items))
+        f.close()
