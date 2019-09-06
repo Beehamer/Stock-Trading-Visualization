@@ -30,11 +30,12 @@ def date2num(date):
 class StockTradingGraph:
     """A stock trading visualization using matplotlib made to render OpenAI gym environments"""
 
-    def __init__(self, df, title=None):
+    def __init__(self, df, training_set_size, title=None):
         self.df = df
         self.net_worths = np.zeros(len(df['Date']))
         self.profit_values = np.zeros(len(df['Date']))
 
+        self.training_set_size = training_set_size
 
 
         # Create a figure on screen and set the title
@@ -43,17 +44,33 @@ class StockTradingGraph:
 
         # Loading the s&p 500 data
         self.sp_df = pd.read_csv('/Users/yilun/Desktop/File/work/bver/gym-env/Stock-Trading-Visualization/data/^GSPC.csv')
-
         lags = (parser.parse(df['Date'].iloc[0]) - parser.parse(self.sp_df['Date'].iloc[0])).days
 
-        print (20*"*" , lags)
+
+
         self.sp_df = self.sp_df[lags:lags + len(df['Date'])]
         # converting them to the actual profit
         self.sp_array = self.sp_df['Close'].to_numpy()
-        self.initial_stock_num  = 10000.0 / self.sp_array[0]
-        self.sp_profit = np.zeros(len(self.sp_array))
-        for i in range(1, len(self.sp_array)):
-            self.sp_profit[i] = (self.sp_array[i] - self.sp_array[i - 1]) * self.initial_stock_num + self.sp_profit[i - 1]
+        self.initial_sp_stock_num  = 10000.0 / self.sp_array[self.training_set_size]
+        self.sp_worth = np.full(len(self.sp_array), 10000)
+
+
+        for i in range(self.training_set_size, len(self.sp_array)):
+            self.sp_worth[i] = self.initial_sp_stock_num * self.sp_array[i]
+            print("*** S&P worth", i, self.sp_worth[i], self.initial_sp_stock_num, self.sp_array[i])
+
+
+        self.buy_and_hold = np.zeros(len(df['Date']))
+        self.buy_and_hold[0] = 10000
+
+        if 'Adjusted_Close' in df:
+            self.initial_stock_num_buy_and_hold = 10000.0 / self.df['Adjusted_Close'].iloc[self.training_set_size]
+            for i in range(self.training_set_size, len(df['Date'])):
+                self.buy_and_hold[i] = self.initial_stock_num_buy_and_hold * df['Adjusted_Close'].iloc[i]
+        else:
+            self.initial_stock_num_buy_and_hold = 10000.0 / self.df['Close'].iloc[self.training_set_size]
+            for i in range(self.training_set_size, len(df['Date'])):
+                self.buy_and_hold[i] = self.initial_stock_num_buy_and_hold * df['Close'].iloc[i]
 
         # Add one more subplot for the profit
         self.profit_ax = plt.subplot2grid((6, 1), (0, 0), rowspan= 2, colspan= 1)
@@ -82,7 +99,10 @@ class StockTradingGraph:
         # Plot net worths
         self.net_worth_ax.plot_date(
             dates, self.net_worths[step_range], '-', label='Net Worth')
-
+        self.net_worth_ax.plot_date(
+            dates, self.sp_worth[step_range], '-', label='S&P 500', color = "blue")
+        self.net_worth_ax.plot_date(
+            dates, self.buy_and_hold[step_range], '-', label='Buy and Hold', color = "yellow")
         # Show legend, which uses the label we defined for the plot above
         self.net_worth_ax.legend()
         legend = self.net_worth_ax.legend(loc=2, ncol=2, prop={'size': 8})
@@ -108,14 +128,13 @@ class StockTradingGraph:
         # Clear the frame rendered last step
         self.profit_ax.clear()
         profit = net_worth - starting_net_worth
-        if current_step == 0:
-            sp_profit = 0
-        else:
-            sp_profit = (self.sp_array[current_step] - self.sp_array[current_step - 1]) * self.initial_stock_num
+        # if current_step == 0:
+        #     sp_profit = 0
+        # else:
+        #     sp_profit = (self.sp_array[current_step] - self.sp_array[current_step - 1]) * self.initial_spstock_num
         self.profit_ax.plot_date(
             dates, self.profit_values[step_range], '-', label='Profit', color = "red")
-        self.profit_ax.plot_date(
-            dates, self.sp_profit[step_range], '-', label='S&P 500 Profit', color = "blue")
+
         # Show legend, which uses the label we defined for the plot above
         self.profit_ax.legend()
         legend = self.profit_ax.legend(loc=2, ncol=2, prop={'size': 8})
@@ -131,17 +150,18 @@ class StockTradingGraph:
                                              fc='w', ec='k', lw=1),
                                    color="black",
                                    fontsize="small")
-        last_sp_profit = self.sp_profit[current_step]
-        self.profit_ax.annotate('{0:.2f}'.format(last_sp_profit), (last_date, last_sp_profit),
-                                   xytext=(last_date, last_sp_profit),
-                                   bbox=dict(boxstyle='round',
-                                             fc='w', ec='k', lw=1),
-                                   color="black",
-                                   fontsize="small")
+        # last_sp_profit = self.sp_profit[current_step]
+        # self.profit_ax.annotate('{0:.2f}'.format(last_sp_profit), (last_date, last_sp_profit),
+        #                            xytext=(last_date, last_sp_profit),
+        #                            bbox=dict(boxstyle='round',
+        #                                      fc='w', ec='k', lw=1),
+        #                            color="black",
+        #                            fontsize="small")
 
         # Add space above and below min/max net worth
-        self.net_worth_ax.set_ylim(
-            min(self.profit_values[np.nonzero(self.profit_values)]) / 1.25, max(self.profit_values) * 1.25)
+        self.net_worth_ax.set_ylim(-100000, 100000)
+            # min(self.profit_values[np.nonzero(self.profit_values)]) / 1.25, max(self.profit_values) * 1.25)
+
 
     def _render_price(self, current_step, net_worth, dates, step_range):
         self.price_ax.clear()

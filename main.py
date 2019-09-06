@@ -59,14 +59,14 @@ def main():
     print("The model to train the agent here is: ", options.model)
 
     # The algorithms require a vectorized environment to run
-    env = DummyVecEnv([lambda: StockTradingEnv(df, options.look_back_days)])
+    env = DummyVecEnv([lambda: StockTradingEnv(df, options.look_back_days, options.training_set_size)])
 
     if options.model == "PPO2":
         model = PPO2(MlpPolicy, env, verbose=1)
         model.learn(total_timesteps=options.training_set_size)
     
     obs = env.reset()
-    for i in range(len(df['Date'])):
+    for i in range(options.training_set_size, len(df['Date'])):
         action, _states = model.predict(obs)
         obs, rewards, done, info = env.step(action)
         env.render(title= options.ticker)

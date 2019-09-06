@@ -26,13 +26,13 @@ class StockTradingEnv(gym.Env):
 
     lookback_days = 40
 
-    def __init__(self, df, lookback_days):
+    def __init__(self, df, lookback_days, training_set_size):
         super(StockTradingEnv, self).__init__()
         print ("*** *** here at __init__ *** *** lookback_days is " + str(lookback_days))
         self.df = self._adjust_prices(df)
         self.reward_range = (0, MAX_ACCOUNT_BALANCE)
         self.lookback_days = lookback_days
-
+        self.training_set_size = training_set_size
         # Actions of the format Buy x%, Sell x%, Hold, etc.
         self.action_space = spaces.Box(
             low=np.array([0, 0]), high=np.array([3, 1]), dtype=np.float16)
@@ -140,6 +140,20 @@ class StockTradingEnv(gym.Env):
 
         return obs, reward, done, {}
 
+    # def reset(self):
+    #     # Reset the state of the environment to an initial state
+    #     self.balance = INITIAL_ACCOUNT_BALANCE
+    #     self.net_worth = INITIAL_ACCOUNT_BALANCE
+    #     self.max_net_worth = INITIAL_ACCOUNT_BALANCE
+    #     self.shares_held = 0
+    #     self.cost_basis = 0
+    #     self.total_shares_sold = 0
+    #     self.total_sales_value = 0
+    #     self.current_step = 0
+    #     self.trades = []
+    #
+    #     return self._next_observation()
+
     def reset(self):
         # Reset the state of the environment to an initial state
         self.balance = INITIAL_ACCOUNT_BALANCE
@@ -149,8 +163,9 @@ class StockTradingEnv(gym.Env):
         self.cost_basis = 0
         self.total_shares_sold = 0
         self.total_sales_value = 0
-        self.current_step = 0
+        self.current_step = self.training_set_size
         self.trades = []
+        self.profit_values = np.zeros(len(self.df))
 
         return self._next_observation()
 
@@ -167,7 +182,7 @@ class StockTradingEnv(gym.Env):
             f'Avg cost for held shares: {self.cost_basis} (Total sales value: {self.total_sales_value})\n')
         file.write(
             f'Net worth: {self.net_worth} (Max net worth: {self.max_net_worth})\n')
-        file.write(f'Profit: {profit}\n\n')
+        file.write(f'Profit: f{profit}\n\n')
 
         file.close()
 
@@ -179,7 +194,7 @@ class StockTradingEnv(gym.Env):
         elif mode == 'live':
             if self.visualization == None:
                 self.visualization = StockTradingGraph(
-                    self.df, kwargs.get('title', None))
+                    self.df, self.training_set_size, kwargs.get('title', None))
 
             if self.current_step > self.lookback_days:
                 self.visualization.render(
