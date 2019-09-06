@@ -160,9 +160,10 @@ class StockTradingGraph:
         #                                      fc='w', ec='k', lw=1),
         #                            color="black",
         #                            fontsize="small")
-
+        min_profit = min(0, self.profit_values.min())
+        max_profit = self.profit_values.max()
         # Add space above and below min/max net worth
-        self.net_worth_ax.set_ylim(-100000, 100000)
+        self.profit_ax.set_ylim(min_profit * 1.25, max_profit * 1.25)
             # min(self.profit_values[np.nonzero(self.profit_values)]) / 1.25, max(self.profit_values) * 1.25)
 
 

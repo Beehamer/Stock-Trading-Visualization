@@ -3,6 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="e5badd34-97ad-4769-be86-fbee12058b08" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+<<<<<<< Updated upstream
+=======
+      <change beforePath="$PROJECT_DIR$/render/StockTradingGraph.py" afterPath="$PROJECT_DIR$/render/StockTradingGraph.py" />
+>>>>>>> Stashed changes
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -19,9 +23,17 @@
       <file leaf-file-name="StockTradingGraph.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/render/StockTradingGraph.py">
           <provider selected="true" editor-type-id="text-editor">
+<<<<<<< Updated upstream
             <state relative-caret-position="511">
               <caret line="164" column="41" lean-forward="false" selection-start-line="164" selection-start-column="41" selection-end-line="164" selection-end-column="41" />
               <folding />
+=======
+            <state relative-caret-position="408">
+              <caret line="120" column="0" lean-forward="true" selection-start-line="120" selection-start-column="0" selection-end-line="120" selection-end-column="0" />
+              <folding>
+                <element signature="e#2#20#0" expanded="true" />
+              </folding>
+>>>>>>> Stashed changes
             </state>
           </provider>
         </entry>
@@ -254,6 +266,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="408">
           <caret line="120" column="0" lean-forward="true" selection-start-line="120" selection-start-column="0" selection-end-line="120" selection-end-column="0" />
+<<<<<<< Updated upstream
           <folding />
         </state>
       </provider>
@@ -272,6 +285,8 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="383">
           <caret line="165" column="50" lean-forward="false" selection-start-line="165" selection-start-column="50" selection-end-line="165" selection-end-column="50" />
+=======
+>>>>>>> Stashed changes
           <folding>
             <element signature="e#0#13#0" expanded="true" />
           </folding>
