@@ -1,11 +1,18 @@
+import os
+dir_path = os.path.dirname(os.path.realpath(__file__))
+print("The current working directory is {}".format(dir_path))
+
 import gym
 import sys
 from pathlib import Path
+import numpy as np
 
 from argparse import ArgumentParser
 from stable_baselines.common.policies import MlpPolicy
 from stable_baselines.common.vec_env import DummyVecEnv
-from stable_baselines import PPO2
+from stable_baselines.ppo2.ppo2 import PPO2
+
+
 
 from env.StockTradingEnv import StockTradingEnv
 
@@ -30,7 +37,7 @@ def cmd_parse():
                         dest="look_back_days", default="40")
     parser.add_argument("--output_file",
                         help="Name of output file for the rewards and the total net_worth. Default is output.csv",
-                        dest="output_file", default="output.csv")
+                        dest="output_file", default="logs/output")
     return parser
 
 
@@ -49,7 +56,8 @@ def main():
         print("Loading ticker data from: " + "./data/" + options.ticker + ".csv")
     else:
         print("Data file for ticker does not exist. Please download data first to ./data/" + options.ticker + ".csv")
-
+    training_logs_path = options.output_file + "_training_logs.csv"
+    eval_logs_path = options.output_file + "_eval_logs"
 
     ## Get the training set size ##
     print("The options.training_set_size is ", options.training_set_size)
@@ -61,12 +69,13 @@ def main():
     print("The model to train the agent here is: ", options.model)
 
     # The algorithms require a vectorized environment to run
-    env = DummyVecEnv([lambda: StockTradingEnv(df, options.look_back_days, options.training_set_size, options.output_file)])
+    env = DummyVecEnv([lambda: StockTradingEnv(df, options.look_back_days, options.training_set_size, eval_logs_path)])
 
     if options.model == "PPO2":
         model = PPO2(MlpPolicy, env, verbose=1)
         model.learn(total_timesteps=options.training_set_size)
-    
+
+    np.savetxt(training_logs_path, model.training_rewards, delimiter=",")
     obs = env.reset()
     for i in range(options.training_set_size, len(df['Date'])):
         action, _states = model.predict(obs)
